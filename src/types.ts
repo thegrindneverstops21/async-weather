@@ -1,5 +1,5 @@
 export interface CurrentWeather {
-  temparature: number;
+  temperature: number;
   windSpeed: number;
   weatherCode: number;
   time: string;
