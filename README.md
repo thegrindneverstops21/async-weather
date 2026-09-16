@@ -36,7 +36,12 @@ src/
 ## Sample Console Output
 
 ### Callback version
+<img width="444" height="265" alt="image" src="https://github.com/user-attachments/assets/ec6f47b4-c800-4f08-b408-1ca76cb29584" />
+
 
 ### Promise version
+<img width="954" height="481" alt="image" src="https://github.com/user-attachments/assets/a1d29d45-6508-4216-8e78-0d380f45837c" />
+
 
 ### Async/await version
+<img width="922" height="441" alt="image" src="https://github.com/user-attachments/assets/ffc21fa4-557e-42b6-8fdb-0ba366b28d41" />
