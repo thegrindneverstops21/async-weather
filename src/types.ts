@@ -5,8 +5,16 @@ export interface CurrentWeather {
   time: string;
 }
 
+
+export interface DailyWeather {
+  time: string[];
+  temperature_2m_max: number[];
+  temperature_2m_min: number[];
+}
+
 export interface WeatherData {
   current_weather: CurrentWeather;
+  daily: DailyWeather;
 }
 
 export interface Post {
@@ -17,4 +25,15 @@ export interface Post {
 
 export interface NewsData {
   posts: Post[];
+}
+
+export interface GeocodeResult {
+  latitude: number;
+  longitude: number;
+  name: string;
+  country: string;
+}
+
+export interface GeocodeResponse {
+  results: GeocodeResult[];
 }
