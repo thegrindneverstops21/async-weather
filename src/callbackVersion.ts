@@ -6,7 +6,7 @@ const NEWS_URL = "https://dummyjson.com/posts?limit=5";
 
 function geocodeUrl(place: string): string {
   return `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
-    place
+    place,
   )}&count=1`;
 }
 
@@ -39,11 +39,18 @@ function fetchJson<T>(url: string, callback: JsonCallback<T>): void {
     .on("error", (err) => callback(err));
 }
 
-function fetchGeocode(place: string, callback: JsonCallback<GeocodeResponse>): void {
+function fetchGeocode(
+  place: string,
+  callback: JsonCallback<GeocodeResponse>,
+): void {
   fetchJson<GeocodeResponse>(geocodeUrl(place), callback);
 }
 
-function fetchWeather(lat: number, lon: number, callback: JsonCallback<WeatherData>): void {
+function fetchWeather(
+  lat: number,
+  lon: number,
+  callback: JsonCallback<WeatherData>,
+): void {
   fetchJson<WeatherData>(weatherUrl(lat, lon), callback);
 }
 
@@ -55,7 +62,11 @@ function fetchNews(callback: JsonCallback<NewsData>): void {
 // This is "callback hell" in action, made worse by the extra geocoding step.
 function fetchDashboardData(
   place: string,
-  callback: JsonCallback<{ weather: WeatherData; news: NewsData; place: string }>
+  callback: JsonCallback<{
+    weather: WeatherData;
+    news: NewsData;
+    place: string;
+  }>,
 ): void {
   fetchGeocode(place, (geoErr, geoData) => {
     if (geoErr) {
@@ -85,7 +96,11 @@ function fetchDashboardData(
           return;
         }
 
-        callback(null, { weather, news, place: `${match.name}, ${match.country}` });
+        callback(null, {
+          weather,
+          news,
+          place: `${match.name}, ${match.country}`,
+        });
       });
     });
   });
@@ -102,8 +117,16 @@ async function main(): Promise<void> {
     }
 
     const { weather, news, place: resolvedPlace } = data!;
+    const condition = getWeatherDescription(weather.current_weather.weatherCode);
+    const high = weather.daily.temperature_2m_max[0];
+    const low = weather.daily.temperature_2m_min[0];
+
     console.log(`\nWeather in ${resolvedPlace}:`);
-    console.log(`Current temperature: ${weather.current_weather.temperature}°C`);
+    console.log(`Conditions: ${condition}`);
+    console.log(
+      `Current temperature: ${weather.current_weather.temperature}°C`,
+    );
+    console.log(`High: ${high}°C  |  Low: ${low}°C`);
     console.log(`Wind speed: ${weather.current_weather.windSpeed} km/h\n`);
 
     console.log("Latest headlines:");
