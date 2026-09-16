@@ -4,7 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "callback": "tsx src/callbackVersion.ts",
+    "promise": "tsx src/promiseVersion.ts",
+    "async": "tsx src/asyncAwaitVersion.ts",
+    "build": "tsc"
   },
   "keywords": [],
   "author": "",
@@ -12,7 +16,7 @@
   "type": "module",
   "devDependencies": {
     "@types/node": "^26.6.1",
-    "ts-node": "^10.9.2",
+    "tsx": "^4.23.13",
     "typescript": "^7.0.2"
   }
 }

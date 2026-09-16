@@ -1,4 +1,4 @@
-import http from "http";
+import https from "https";
 import { on } from "process";
 import { NewsData, WeatherData } from "./types";
 import { formatError } from "./utils";
@@ -9,7 +9,7 @@ const NEWS_URL = "https://dummyjson.com/posts?limit=5";
 
 function fetchJson<T>(url: string): Promise<T> {
     return new Promise<T>((resolve, reject) => {
-        http.get(url, (res) => {
+        https.get(url, (res) => {
             if(res.statusCode && res.statusCode >= 400) {
                 reject(new Error(`Request failed with status code ${res.statusCode}`));
                 res.resume(); 

@@ -1,4 +1,4 @@
-import http from "http";
+import https from "https";
 import { on } from "process";
 import { NewsData, WeatherData } from "./types";
 import { formatError } from "./utils";
@@ -10,7 +10,7 @@ const NEWS_URL = "https://dummyjson.com/posts?limit=5";
 type JsonCallback<T> = (error: Error | null, data?: T) => void;
 
 function fetchJson<T>(url: string, callback: JsonCallback<T>): void {
-  http.get(url, (res) => {
+  https.get(url, (res) => {
     if(res.statusCode && res.statusCode >= 400) {
       callback(new Error(`Request failed with status code ${res.statusCode}`));
       res.resume(); 
