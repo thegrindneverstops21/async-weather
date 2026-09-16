@@ -1,6 +1,6 @@
 import https from "https";
 import { WeatherData, NewsData, GeocodeResponse, GeocodeResult } from "./types";
-import { formatError, promptUser } from "./utils";
+import { formatError, promptUser, getWeatherDescription } from "./utils";
 
 const NEWS_URL = "https://dummyjson.com/posts?limit=5";
 
@@ -11,7 +11,7 @@ function geocodeUrl(place: string): string {
 }
 
 function weatherUrl(lat: number, lon: number): string {
-  return `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
+  return `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&daily=temperature_2m_max,temperature_2m_min&timezone=auto`;
 }
 
 function fetchJson<T>(url: string): Promise<T> {
@@ -58,7 +58,7 @@ function fetchNews(): Promise<NewsData> {
 function printWeather(place: string, weather: WeatherData): void {
   console.log(`\nWeather in ${place}:`);
   console.log(`Current temperature: ${weather.current_weather.temperature}°C`);
-  console.log(`Wind speed: ${weather.current_weather.windspeed} km/h\n`);
+  console.log(`Wind speed: ${weather.current_weather.windSpeed} km/h\n`);
 }
 
 function printNews(news: NewsData): void {
@@ -68,7 +68,7 @@ function printNews(news: NewsData): void {
 
 async function main(): Promise<void> {
   console.log("=== Promise Version: chained fetch (geocode -> weather -> news) ===\n");
-  const place = await askQuestion("Enter a place to check weather for: ");
+  const place = await promptUser("Enter a place to check weather for: ");
 
   let resolvedLocation: GeocodeResult;
 
