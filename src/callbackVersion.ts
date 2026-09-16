@@ -1,81 +1,114 @@
 import https from "https";
-import { on } from "process";
-import { NewsData, WeatherData } from "./types";
-import { formatError } from "./utils";
+import { WeatherData, NewsData, GeocodeResponse } from "./types";
+import { formatError, promptUser } from "./utils";
 
-const WEATHER_URL =
-  "https://api.open-meteo.com/v1/forecast?latitude=-23.9045&longitude=29.4689&current_weather=true";
 const NEWS_URL = "https://dummyjson.com/posts?limit=5";
+
+function geocodeUrl(place: string): string {
+  return `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
+    place
+  )}&count=1`;
+}
+
+function weatherUrl(lat: number, lon: number): string {
+  return `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
+}
 
 type JsonCallback<T> = (error: Error | null, data?: T) => void;
 
 function fetchJson<T>(url: string, callback: JsonCallback<T>): void {
-  https.get(url, (res) => {
-    if(res.statusCode && res.statusCode >= 400) {
-      callback(new Error(`Request failed with status code ${res.statusCode}`));
-      res.resume(); 
-      return;
-    }
-
-    let raw = "";
-    res.setEncoding("utf8");
-    res.on("data", (chunk) => {
-      raw += chunk;
-    });
-    res.on("end", () => {
-      try {
-        resolve_(JSON.parse(raw) as T);
-      } catch(err) {
-        callback(err as Error);
+  https
+    .get(url, (res) => {
+      if (res.statusCode && res.statusCode >= 400) {
+        callback(new Error(`Request failed with status ${res.statusCode}`));
+        res.resume();
+        return;
       }
-    });
 
-    function resolve_(data: T) {
-      callback(null, data);
-    }
-  })
-  .on("error", (err) => callback(err as Error));
+      let raw = "";
+      res.setEncoding("utf8");
+      res.on("data", (chunk) => (raw += chunk));
+      res.on("end", () => {
+        try {
+          callback(null, JSON.parse(raw) as T);
+        } catch (err) {
+          callback(err as Error);
+        }
+      });
+    })
+    .on("error", (err) => callback(err));
 }
 
-function fetchWeather(callback: JsonCallback<WeatherData>): void {
-  fetchJson<WeatherData>(WEATHER_URL, callback);
+function fetchGeocode(place: string, callback: JsonCallback<GeocodeResponse>): void {
+  fetchJson<GeocodeResponse>(geocodeUrl(place), callback);
+}
+
+function fetchWeather(lat: number, lon: number, callback: JsonCallback<WeatherData>): void {
+  fetchJson<WeatherData>(weatherUrl(lat, lon), callback);
 }
 
 function fetchNews(callback: JsonCallback<NewsData>): void {
   fetchJson<NewsData>(NEWS_URL, callback);
 }
 
-function fetchDashboard(callback: JsonCallback<{ weather: WeatherData; news: NewsData }>): void {
-  fetchWeather((weatherError, weather) => {
-    if (weatherError || !weather) {
-      callback(weatherError ?? new Error("No weather data returned"));
-      return
+// Nested on purpose: geocode -> weather -> news, each depending on the last.
+// This is "callback hell" in action, made worse by the extra geocoding step.
+function fetchDashboardData(
+  place: string,
+  callback: JsonCallback<{ weather: WeatherData; news: NewsData; place: string }>
+): void {
+  fetchGeocode(place, (geoErr, geoData) => {
+    if (geoErr) {
+      callback(geoErr);
+      return;
     }
 
-    console.log("Weather fetched. Now fetching news...");
-    fetchNews((newsError, news) => {
-      if (newsError || !news) {
-        callback(newsError ?? new Error("No news data returned"));
+    const match = geoData?.results?.[0];
+    if (!match) {
+      callback(new Error(`No location found for "${place}"`));
+      return;
+    }
+
+    console.log(`Found "${match.name}, ${match.country}". Fetching weather...`);
+
+    fetchWeather(match.latitude, match.longitude, (weatherErr, weather) => {
+      if (weatherErr || !weather) {
+        callback(weatherErr ?? new Error("No weather data returned"));
         return;
       }
-      callback(null, { weather, news });
+
+      console.log("Weather fetched. Now fetching news (nested callback)...");
+
+      fetchNews((newsErr, news) => {
+        if (newsErr || !news) {
+          callback(newsErr ?? new Error("No news data returned"));
+          return;
+        }
+
+        callback(null, { weather, news, place: `${match.name}, ${match.country}` });
+      });
     });
   });
 }
 
-console.log("Fetching dashboard data...");
-fetchDashboard((error, data) => {
-  if (error) {
-    console.error(formatError("Error fetching dashboard data", error));
-    return;
-  }
+async function main(): Promise<void> {
+  console.log("=== Callback Version: Async Weather & News Dashboard ===\n");
+  const place = await askQuestion("Enter a place to check weather for: ");
 
-  const { weather, news } = data!;
-  console.log(`Current Weather: ${weather.current_weather}`);
-  console.log(`Wind Speed: ${weather.current_weather.windSpeed} km/h\n`);
+  fetchDashboardData(place, (err, data) => {
+    if (err) {
+      console.error(formatError("Callback Dashboard", err));
+      return;
+    }
 
-  console.log("Latest headlines:");
-  news.posts.forEach((post, index) => {
-    console.log(`${index + 1}. ${post.title}`);
+    const { weather, news, place: resolvedPlace } = data!;
+    console.log(`\nWeather in ${resolvedPlace}:`);
+    console.log(`Current temperature: ${weather.current_weather.temperature}°C`);
+    console.log(`Wind speed: ${weather.current_weather.windspeed} km/h\n`);
+
+    console.log("Latest headlines:");
+    news.posts.forEach((post, i) => console.log(`${i + 1}. ${post.title}`));
   });
-});
+}
+
+main();

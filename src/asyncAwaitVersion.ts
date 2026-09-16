@@ -1,7 +1,7 @@
 import https from "https";
 import { on } from "process";
 import { NewsData, WeatherData } from "./types";
-import { formatError } from "./utils";
+import { formatError, promptUser, getWeatherDescription } from "./utils";
 
 const WEATHER_URL =
   "https://api.open-meteo.com/v1/forecast?latitude=-23.9045&longitude=29.4689&current_weather=true";
