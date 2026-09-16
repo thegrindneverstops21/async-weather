@@ -56,9 +56,16 @@ function fetchNews(): Promise<NewsData> {
 }
 
 function printWeather(place: string, weather: WeatherData): void {
+  const { current_weather, daily } = weather;
+  const condition = getWeatherDescription(current_weather.weatherCode);
+  const high = daily.temperature_2m_max[0];
+  const low = daily.temperature_2m_min[0];
+
   console.log(`\nWeather in ${place}:`);
-  console.log(`Current temperature: ${weather.current_weather.temperature}°C`);
-  console.log(`Wind speed: ${weather.current_weather.windSpeed} km/h\n`);
+  console.log(`Conditions: ${condition}`);
+  console.log(`Current temperature: ${current_weather.temperature}°C`);
+  console.log(`High: ${high}°C  |  Low: ${low}°C`);
+  console.log(`Wind speed: ${current_weather.windSpeed} km/h\n`);
 }
 
 function printNews(news: NewsData): void {
